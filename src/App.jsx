@@ -13,18 +13,15 @@ function App() {
       {/* Rota pública */}
       <Route path="/" element={<Login />} />
 
-      {/* Rotas com Header e proteção */}
+      {/* 🔒 Rotas protegidas com Header */}
       <Route element={<Header />}>
-        <Route element={<PrivateRoute />}>
+        <Route element={<Header /> }>
           <Route path="/produtos" element={<ManagerProducts />} />
           <Route path="/promocoes" element={<PromotionProducts />} />
           <Route path="/gestao-usuarios" element={<ManagerUsers />} />
           <Route path="/usuario" element={<Users />} />
         </Route>
       </Route>
-
-      {/* Rota coringa (opcional) */}
-      {/* <Route path="*" element={<NotFound />} /> */}
     </Routes>
   );
 }
