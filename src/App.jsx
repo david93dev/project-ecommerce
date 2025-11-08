@@ -3,9 +3,11 @@ import Login from "./pages/Login";
 import ManagerProducts from "./pages/ManagerProducts";
 import ManagerUsers from "./pages/ManagerUsers";
 import PromotionProducts from "./pages/PromotionProducts";
-import Users from "./pages/Users";
+import Users from "./pages/Profile";
 import { Routes, Route } from "react-router-dom";
 import { PrivateRoute } from "./components/PrivateRoute";
+import ProductDetails from "./pages/ProductDetails";
+import Perfil from "./pages/Profile";
 
 function App() {
   return (
@@ -16,10 +18,11 @@ function App() {
       {/* 🔒 Rotas protegidas com Header */}
       <Route element={<Header />}>
         <Route element={<Header /> }>
-          <Route path="/produtos" element={<ManagerProducts />} />
+          <Route path="/home" element={<ManagerProducts />} />
+          <Route path="/produtos/:id" element={<ProductDetails />} />
           <Route path="/promocoes" element={<PromotionProducts />} />
           <Route path="/gestao-usuarios" element={<ManagerUsers />} />
-          <Route path="/usuario" element={<Users />} />
+          <Route path="/perfil/:id" element={<Perfil />} />
         </Route>
       </Route>
     </Routes>

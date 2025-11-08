@@ -1,66 +1,56 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, easeInOut } from "framer-motion";
-import { Menu, X, ArrowRight, Zap, Search } from "lucide-react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Menu, X, User, Settings, LogOut } from "lucide-react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo2.png";
 
 const navItems = [
-  { name: "Home", to: "/" },
-  { name: "Produtos", to: "/produtos" },
-  { name: "Promoções", to: "/promocoes" },
-  { name: "Gestão de Usuarios", to: "/gestao-usuarios" },
-  { name: "Usuarios", to: "/usuario" },
-  
+ 
 ];
+
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const profileRef = useRef(null);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+    const id = localStorage.getItem("userId");
+    const name = localStorage.getItem("userName");
+    const role = localStorage.getItem("userRole");
+    const email = localStorage.getItem("userEmail");
+
+    if (id && name && role) {
+      setUser({ id, name, role, email });
+    } else {
+      navigate("/"); // redireciona pro login se não houver usuário logado
+    }
+
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setIsProfileOpen(false);
+      }
     };
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-  const containerVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-      },
-    },
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
   };
-  const itemVariants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: { opacity: 1, y: 0 },
-  };
-  const mobileMenuVariants = {
-    closed: {
-      opacity: 0,
-      x: "100%",
-      transition: {
-        duration: 0.3,
-        ease: easeInOut,
-      },
-    },
-    open: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.3,
-        ease: easeInOut,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-  const mobileItemVariants = {
-    closed: { opacity: 0, x: 20 },
-    open: { opacity: 1, x: 0 },
-  };
+
+  if (!user) return null;
+
   return (
     <>
       <motion.header
@@ -69,170 +59,117 @@ export default function Header() {
             ? "border-border/50 bg-background/80 border-b shadow-sm backdrop-blur-md"
             : "bg-transparent"
         }`}
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible">
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <div className="mx-auto w-full">
-          <div className="flex h-16 items-center justify-between bg-purple-100 px-26 rounded-b-lg shadow">
-            <motion.div
-              className="flex items-center space-x-3"
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}>
-              <Link
-                prefetch={false}
-                to="/"
-                className="flex items-center space-x-3">
-                <div className="relative">
-                  <div className="flex h-6 w-7 items-center justify-center rounded-xl  shadow-lg">
-                    <img src={logo} alt="logo" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-green-400"></div>
+          <div className="flex h-16 items-center justify-between bg-purple-300 px-6 rounded-b-lg shadow">
+            {/* LOGO */}
+            <Link to="/home" className="flex items-center space-x-3">
+              <div className="relative">
+                <div className="flex h-6 w-7 items-center justify-center rounded-xl shadow-lg">
+                  <img src={logo} alt="logo" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-foreground text-lg font-bold">
-                    Mercado Online.
-                  </span>
-                  <span className="text-muted-foreground -mt-1 text-xs">
-                    compre mais, pague menos
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
+                <div className="absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-green-400"></div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-foreground text-lg font-bold">
+                  Mercado Online.
+                </span>
+                <span className="text-muted-foreground -mt-1 text-xs">
+                  compre mais, pague menos
+                </span>
+              </div>
+            </Link>
 
+            {/* NAV LINKS */}
             <nav className="hidden items-center space-x-1 lg:flex">
-              {navItems.map((item, index) => (
-                <motion.div
+              {navItems.map((item) => (
+                <NavLink
                   key={item.name}
-                  variants={itemVariants}
-                  className="relative"
-                  onMouseEnter={() => setHoveredItem(item.name)}
-                  onMouseLeave={() => setHoveredItem(null)}>
-                  <NavLink
-                    prefetch={false}
-                    to={item.to}
-                    className="text-foreground/80 hover:text-foreground relative rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200">
-                    {hoveredItem === item.name && (
-                      <motion.div
-                        className="bg-muted absolute inset-0 rounded-lg"
-                        layoutId="navbar-hover"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 30,
-                        }}
-                      />
-                    )}
-                    <span className="relative z-10">{item.name}</span>
-                  </NavLink>
-                </motion.div>
+                  to={item.to}
+                  className="text-foreground/80 hover:text-foreground relative rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200"
+                >
+                  {item.name}
+                </NavLink>
               ))}
             </nav>
 
-            <motion.div
-              className="hidden items-center space-x-3 lg:flex"
-              variants={itemVariants}>
-              <motion.button
-                className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}>
-                <Search className="h-5 w-5" />
-              </motion.button>
+            {/* PERFIL */}
+            <div className="hidden lg:flex items-center space-x-3 relative" ref={profileRef}>
+              <div
+                className="flex items-center space-x-2 cursor-pointer hover:bg-purple-200 rounded-lg px-3 py-2 transition"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+              >
+                <User className="w-5 h-5 text-foreground" />
+                <span className="text-sm font-medium text-foreground">
+                  {user.name.split(" ")[0]}
+                </span>
+              </div>
 
-              <Link
-                prefetch={false}
-                to="/login"
-                className="text-foreground/80 hover:text-foreground px-4 py-2 text-sm font-medium transition-colors duration-200">
-                Sair
-              </Link>
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-12 w-52 bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden z-50"
+                  >
+                    <div className="flex flex-col py-2">
+                      <div className="px-4 py-2 border-b text-xs text-gray-500">
+                        {user.email}
+                      </div>
 
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}>
-                <Link
-                  prefetch={false}
-                  to="/signup"
-                  className="bg-foreground text-background hover:bg-foreground/90 inline-flex items-center space-x-2 rounded-lg px-5 py-2.5 text-sm font-medium shadow-sm transition-all duration-200">
-                  <span>Entrar</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </motion.div>
-            </motion.div>
+                      {/* ✅ Ver Perfil */}
+                      <button
+                        onClick={() => {
+                          navigate(`/perfil/${user.id}`);
+                          setIsProfileOpen(false);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 text-left"
+                      >
+                        <User className="w-4 h-4" /> Meu Perfil
+                      </button>
 
+                      {/* ✅ Gerenciamento de Perfil (apenas admin) */}
+                      {user.role?.toLowerCase() === "admin" && (
+                        <button
+                          onClick={() => {
+                            navigate("/gestao-usuarios"); // nova rota
+                            setIsProfileOpen(false);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 text-left"
+                        >
+                          <Settings className="w-4 h-4" /> Gerenciamento de Perfil
+                        </button>
+                      )}
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        <LogOut className="w-4 h-4" /> Sair
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* MOBILE MENU BUTTON */}
             <motion.button
               className="text-foreground hover:bg-muted rounded-lg p-2 transition-colors duration-200 lg:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              variants={itemVariants}
-              whileTap={{ scale: 0.95 }}>
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </motion.button>
           </div>
         </div>
       </motion.header>
 
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <motion.div
-              className="border-border bg-background fixed top-16 right-4 z-50 w-80 overflow-hidden rounded-2xl border shadow-2xl lg:hidden"
-              variants={mobileMenuVariants}
-              initial="closed"
-              animate="open"
-              exit="closed">
-              <div className="space-y-6 p-6">
-                <div className="space-y-1">
-                  {navItems.map((item) => (
-                    <motion.div key={item.name} variants={mobileItemVariants}>
-                      <Link
-                        prefetch={false}
-                        to={item.to}
-                        className="text-foreground hover:bg-muted block rounded-lg px-4 py-3 font-medium transition-colors duration-200"
-                        onClick={() => setIsMobileMenuOpen(false)}>
-                        {item.name}
-                      </Link>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <motion.div
-                  className="border-border space-y-3 border-t pt-6"
-                  variants={mobileItemVariants}>
-                  <Link
-                    prefetch={false}
-                    to="/login"
-                    className="text-foreground hover:bg-muted block w-full rounded-lg py-3 text-center font-medium transition-colors duration-200"
-                    onClick={() => setIsMobileMenuOpen(false)}>
-                    Sair
-                  </Link>
-                  <Link
-                    prefetch={false}
-                    to="/"
-                    className="bg-foreground text-background hover:bg-foreground/90 block w-full rounded-lg py-3 text-center font-medium transition-all duration-200"
-                    onClick={() => setIsMobileMenuOpen(false)}>
-                    Entrar
-                  </Link>
-                </motion.div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-       <main className="mt-30 mx-12">
+      <main className="mt-30 mx-12">
         <Outlet />
       </main>
     </>
